@@ -118,10 +118,10 @@ This repository includes portable skill bundles — each fully self-contained wi
 
 - GitHub Copilot: [.github/skills/cgraph/](.github/skills/cgraph)
 - Claude Code: [.claude/skills/cgraph/](.claude/skills/cgraph)
-- OpenAI Codex: [.codex/skills/cgraph/](.codex/skills/cgraph) — see note below
+- OpenAI Codex: [.codex/skills/cgraph/](.codex/skills/cgraph)
 - Generic agents: [.agents/skills/cgraph/](.agents/skills/cgraph)
 
-> **Note on Codex:** the Codex CLI currently only scans `.agents/skills` (repo, user, and admin scopes) for local skills — it does **not** read `.codex/skills`. The `.codex/skills/cgraph/` folder above is kept for parity with the other agent folders and for any tooling that does read it, but `.agents/skills/cgraph/` is the one Codex actually loads. See [OpenAI's skills docs](https://developers.openai.com/codex/skills/).
+> **Note on Codex:** OpenAI's public docs for Codex only describe the `.agents/skills` convention, but Codex's own source (`codex-rs/config/src/loader/mod.rs::discover_project_layers` + `codex-rs/ext/skills/src/host_roots.rs::roots_from_layer_stack`) confirms it also walks every directory from cwd up to the project root looking for a `.codex/` folder (no `config.toml` required) and scans `.codex/skills` there too, as a repo-scoped root — same walk-up behavior as `.agents/skills`. Both `.codex/skills/cgraph/` and `.agents/skills/cgraph/` above are functional for Codex; they aren't just kept for parity.
 
 The top-level [`installers/`](./installers) folder serves the same scripts to anyone who clones this whole repo and follows the root [INSTALL.md](./INSTALL.md) directly.
 

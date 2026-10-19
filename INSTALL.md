@@ -264,12 +264,12 @@ When an agent is told to use the `cgraph` skill and `codegraph` isn't yet on PAT
 
 Only fall back to the Node.js check/install scripts in `installers/` if the agent specifically needs the npm path or library embedding (Option B). Each skill folder also bundles its own copy of these scripts under `scripts/`, so a skill installed independently of this repo (e.g. via `gh skill install` or a personal `~/.claude/skills/` copy) stays self-contained.
 
-**Codex note:** the Codex CLI only scans `.agents/skills` for local skills (repo/user/admin scopes) — it does not read `.codex/skills`. If you're bootstrapping specifically for Codex, use [.agents/skills/cgraph/](.agents/skills/cgraph), not `.codex/skills/cgraph/`.
+**Codex note:** both `.agents/skills/cgraph/` and `.codex/skills/cgraph/` work for Codex. Its own source walks every directory from cwd up to the project root looking for a `.codex/` folder (no `config.toml` required) and scans `.codex/skills` there as a repo-scoped root, the same way it scans `.agents/skills` — confirmed directly in `codex-rs/config/src/loader/mod.rs` and `codex-rs/ext/skills/src/host_roots.rs`. OpenAI's public docs just don't mention the `.codex/skills` path.
 
 ---
 
 ## What's Next?
 
-- See the skill bundles in [.agents/skills/cgraph/](.agents/skills/cgraph), [.claude/skills/cgraph/](.claude/skills/cgraph), [.codex/skills/cgraph/](.codex/skills/cgraph) (kept for parity; Codex itself reads `.agents/skills`), and [.github/skills/cgraph/](.github/skills/cgraph) for the condensed, agent-facing workflow.
+- See the skill bundles in [.agents/skills/cgraph/](.agents/skills/cgraph), [.claude/skills/cgraph/](.claude/skills/cgraph), [.codex/skills/cgraph/](.codex/skills/cgraph), and [.github/skills/cgraph/](.github/skills/cgraph) for the condensed, agent-facing workflow.
 - Check [README.md](./README.md) for the CLI/MCP reference and configuration summary.
 - Review [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph) — the upstream project and single source of truth for all commands and tools.
