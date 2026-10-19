@@ -1,0 +1,43 @@
+# Dependencies and build artifacts
+node_modules/
+dist/
+build/
+*.tgz
+*.tar.gz
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Test and coverage
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Codegraph test artifacts (don't commit test indices)
+.codegraph/graph.bin
+.codegraph/metadata.json
