@@ -1,6 +1,10 @@
 #!/usr/bin/env pwsh
 # cgraph Node.js Runtime Checker (PowerShell)
-# Checks if Node.js is installed and compatible with cgraph (v18+)
+#
+# NOTE: The codegraph CLI/MCP server (the standalone installer) bundles its own
+# runtime and needs NO Node.js at all. This script is only relevant if you plan
+# to install via `npm i -g @colbymchenry/codegraph` (needs Node) or embed
+# CodeGraph's library API in your own app (needs Node 22.5+ for node:sqlite).
 
 param(
     [switch]$Verbose = $false,
@@ -80,7 +84,7 @@ if ($nodeInfo.Installed) {
     if (Test-Compatibility $nodeInfo.Version) {
         Write-Status "Version $($nodeInfo.Version) is compatible (requires v$MinNodeVersion+)" "OK"
         Write-Host ""
-        Write-Host "✅ Node.js runtime is ready for cgraph" -ForegroundColor Green
+        Write-Host "Node.js runtime is ready for npm install / library embedding" -ForegroundColor Green
         exit 0
     }
     else {

@@ -1,17 +1,17 @@
-# cgraph
+# cgraph: CodeGraph Agent Skill Bundle
 
-**Pre-indexed code knowledge graph skill for AI agents.** cgraph wraps [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph) as a copilot skill, providing local, auto-syncing code indexing for Claude Code, GitHub Copilot, Cursor, Gemini, and other AI agents.
+`cgraph` packages [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph) — a pre-built, local code knowledge graph — as portable agent skill bundles for **GitHub Copilot**, **Claude Code**, **OpenAI Codex**, and generic agents, plus a cross-platform Node.js bootstrap for the optional npm install path.
 
-## Why cgraph?
+CodeGraph parses your project with a native Rust/tree-sitter kernel into a local SQLite graph of every symbol, call edge, and dependency, then watches the filesystem to keep it in sync. Agents query it through a single MCP tool, `codegraph_explore`, and get back verbatim source, call paths, and blast-radius — in one call, with zero file reads — instead of a grep/read loop.
 
-- **Fewer tokens**: Query indexed code structure instead of sending raw files to the LLM
-- **Fewer tool calls**: Get all related code in one request (cross-file resolution, dependencies, class hierarchies)
-- **100% local**: No cloud indexing, no API calls, no privacy concerns
-- **Auto-sync**: The graph updates automatically when you save files—zero manual refresh
+- **Zero cloud dependency:** everything runs and stays on your machine (local SQLite index).
+- **Self-contained runtime:** the standalone installer needs **no Node.js at all** — it bundles its own runtime.
+- **Auto-sync:** a background watcher (native OS file events) keeps the graph current as you edit; no manual re-indexing.
+- **One strong MCP tool:** `codegraph_explore` answers almost any structural question in a single call; narrower tools (`codegraph_node`, `codegraph_search`, `codegraph_callers`, `codegraph_callees`, `codegraph_impact`, `codegraph_files`, `codegraph_status`) exist but are unlisted by default.
 
-## Quick Start
+## Installation
 
-### 1. Install
+### Option A — Standalone bundle (recommended, no Node.js required)
 
 ```bash
 # macOS / Linux
@@ -19,185 +19,118 @@ curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install
 
 # Windows (PowerShell)
 irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+```
 
-# or via npm
+### Option B — npm (requires Node.js, any supported version for the CLI itself)
+
+```bash
 npm i -g @colbymchenry/codegraph
 ```
 
-See [INSTALL.md](./INSTALL.md) for detailed setup and agent integration.
+See [INSTALL.md](./INSTALL.md) for the full guide, including the Node.js compatibility checker and installer scripts in [installers/](./installers) — only needed if you choose Option B, or want to embed CodeGraph's library API (`import CodeGraph from '@colbymchenry/codegraph'`), which requires **Node 22.5+** for its built-in `node:sqlite` usage.
 
-### 2. Initialize in Your Project
+## Usage
 
 ```bash
+# 1. Wire CodeGraph into your detected agents (one-time, machine-wide)
+codegraph install
+
+# 2. Build the graph for a project (creates .codegraph/, one step)
 cd your-project
 codegraph init
+
+# 3. Ask your agent a structural question — it calls codegraph_explore itself
+#    "How does a request reach the database?"
+#    "What calls authenticateUser, and what does it call?"
 ```
 
-This creates `.codegraph/` with the full code graph for your repository. Auto-sync watches for changes.
+Your agent starts the MCP server itself and receives `codegraph_explore` usage guidance automatically in the MCP `initialize` response — there is nothing to prompt-engineer.
 
-### 3. Query the Graph
+## CLI Reference (selected)
 
-Once the skill is active in your agent, use:
-
+```bash
+codegraph install                 # Run installer (explicit)
+codegraph uninstall               # Remove CodeGraph from your agents AND the CLI (--keep-cli for configs only)
+codegraph init [path]             # Initialize a project + build its graph (one step)
+codegraph uninit [path]           # Remove CodeGraph from a project (--force to skip prompt)
+codegraph index [path]            # Full index (--force to re-index, --quiet for less output)
+codegraph sync [path]             # Incremental update
+codegraph status [path]           # Show statistics
+codegraph query <search>          # Search symbols (--kind, --limit, --json)
+codegraph explore <query>         # Same output as the codegraph_explore MCP tool, from the CLI
+codegraph callers <symbol>        # Find what calls a function/method
+codegraph callees <symbol>        # Find what a function/method calls
+codegraph impact <symbol>         # Analyze what code is affected by changing a symbol
+codegraph affected [files...]     # Find test files affected by changed source files
+codegraph daemon                  # Manage background daemons — pick one to stop
+codegraph upgrade [version]       # Update to the latest release (--check, --force)
+codegraph help [command]          # Show help, optionally for one command
 ```
-Graph Query: Find all functions that call fetchUser
-Graph Query: Show the class hierarchy for MyController
-Graph Query: List unused exports in src/utils.ts
-```
+
+Run `codegraph help` or `codegraph --help` for the complete, current list — it is the single source of truth, not this file.
+
+## MCP Tools
+
+| Tool | Default | Purpose |
+|------|---------|---------|
+| `codegraph_explore` | ✅ listed | Answer almost any structural question in one call: verbatim source grouped by file, call paths between symbols (including dynamic-dispatch hops), and a blast-radius summary. |
+| `codegraph_node`, `codegraph_search`, `codegraph_callers`, `codegraph_callees`, `codegraph_impact`, `codegraph_files`, `codegraph_status` | hidden | Fully functional but unlisted — everything they return already arrives inline on `codegraph_explore`. Re-enable with `CODEGRAPH_MCP_TOOLS=explore,node,search,callers,...`, or use their CLI equivalents (`codegraph node` / `query` / `callers` / `callees` / `impact` / `files` / `status`). |
 
 ## Supported Agents
 
-- Claude Code (VS Code)
-- GitHub Copilot (VS Code, Copilot CLI, JetBrains)
+Auto-detected and configured by `codegraph install`:
+
+- Claude Code
 - Cursor
-- Gemini CLI / Codex CLI
-- OpenCode
+- Codex CLI
+- opencode
 - Hermes Agent
-- AntiGravity IDE
+- Gemini CLI
+- Antigravity IDE
 - Kiro
-
-## How It Works
-
-1. **Daemon**: cgraph runs as a lightweight daemon on your machine
-2. **Indexing**: Initial `codegraph init` builds the graph; file watcher syncs on changes
-3. **Skill Integration**: This skill exposes graph query tools to your agent
-4. **Context Injection**: Use tool calls to inject relevant code sections without token waste
-
-## File Structure
-
-```
-.codegraph/
-├── graph.bin          # The indexed knowledge graph (binary)
-├── metadata.json      # Language support, file count, last sync
-└── .cgignore          # Patterns to exclude from indexing
-```
-
-## Providers & Compatibility
-
-| Provider | Status | Notes |
-|----------|--------|-------|
-| Claude Code | ✅ | Full MCP server integration |
-| GitHub Copilot | ✅ | VS Code, Copilot CLI, JetBrains |
-| Cursor | ✅ | Native MCP support |
-| Gemini CLI | ✅ | Custom tool wrapper |
-| Hermes Agent | ✅ | Tool endpoint integration |
-| OpenCode | ✅ | REST API wrapper available |
-
-See [SKILL.md](./SKILL.md) for provider-specific configuration.
-
-## Supported Languages
-
-Full structural extraction and cross-file resolution for:
-
-- TypeScript / JavaScript
-- Python
-- Go
-- Rust
-- Java / Kotlin
-- C / C++
-- C#
-- Ruby
-- PHP
-- Swift
-- Objective-C
-- And more—see `codegraph --help`
+- GitHub Copilot — Copilot Chat in VS Code, the Copilot CLI, and the Copilot plugin in JetBrains IDEs
 
 ## Configuration
 
-### Exclude Paths
+CodeGraph is zero-config by default. It automatically skips dependency/build/cache directories (`node_modules`, `dist`, `build`, `.venv`, etc.), honors your `.gitignore`, and skips files over 1MB. To customize further, add an optional `codegraph.json` at your project root:
 
-Create `.cgignore` in your project root:
-
-```
-node_modules
-.git
-build/
-dist/
-vendor/
-```
-
-### Environment Variables
-
-```bash
-# Enable debug logging
-CODEGRAPH_DEBUG=1
-
-# Custom daemon port (default: 6969)
-CODEGRAPH_PORT=7000
-
-# Custom .codegraph directory location
-CODEGRAPH_HOME=/custom/path
+```json
+{
+  "exclude": ["static/", "**/vendor/**"],
+  "include": ["Tools/"],
+  "deprioritize": ["scripts/"],
+  "extensions": { ".tpl": "php" }
+}
 ```
 
-## Process Management
+See the [upstream Configuration docs](https://github.com/colbymchenry/codegraph#configuration) for full details on `exclude`, `include`, `deprioritize`, and custom `extensions`.
 
-The skill automatically:
-- Starts the codegraph daemon on first query (if not running)
-- Keeps it alive while the agent session is active
-- Gracefully stops it when no queries have been issued for 10 minutes
+## Storage
 
-For manual control:
-
-```bash
-# Start daemon explicitly
-codegraph daemon start
-
-# Stop daemon
-codegraph daemon stop
-
-# Check status
-codegraph daemon status
+```
+.codegraph/
+└── codegraph.db        # Local SQLite graph (symbols, edges, files, FTS5 full-text search)
 ```
 
-## Tools Exposed
+## Agent Skills
 
-| Tool | Purpose |
-|------|---------|
-| `graph_query` | Free-text search across the code graph |
-| `graph_find_functions` | Find all functions by name or pattern |
-| `graph_find_classes` | Find class/interface definitions and hierarchy |
-| `graph_show_dependencies` | Show import dependencies for a file or symbol |
-| `graph_list_exports` | List all public exports from a module |
-| `graph_find_callers` | Find all functions that call a specific function |
-| `graph_find_implementations` | Find all implementations of an interface/base class |
+This repository includes portable skill bundles that document the pre-flight check, install path, and query workflow for each agent surface:
 
-## Performance
-
-- **First index**: 30s–2m depending on repo size
-- **Incremental updates**: <100ms per file change
-- **Query latency**: <50ms average
-- **Memory footprint**: ~100MB–500MB depending on code size
+- GitHub Copilot: [.github/skills/cgraph/](.github/skills/cgraph)
+- Claude Code: [.claude/skills/cgraph/](.claude/skills/cgraph)
+- OpenAI Codex: [.codex/skills/cgraph/](.codex/skills/cgraph)
+- Generic agents: [.agents/skills/cgraph/](.agents/skills/cgraph)
 
 ## Troubleshooting
 
-### Index Is Out of Sync
+See [INSTALL.md](./INSTALL.md#troubleshooting) and the upstream [Troubleshooting section](https://github.com/colbymchenry/codegraph#troubleshooting) for the authoritative list (daemon/lock issues, WSL2 paths, slow indexing, etc).
 
-```bash
-codegraph reinit
-```
+## Links
 
-This rebuilds the graph from scratch while preserving `.cgignore` settings.
-
-### Daemon Won't Start
-
-```bash
-# Check logs
-codegraph daemon logs
-
-# Try restarting
-codegraph daemon restart
-```
-
-### Too Many Files Being Indexed
-
-Update `.cgignore` or set `exclude` patterns in `.codegraph/config.json`.
+- Repository: [davidw-philips/cgraph](https://github.com/davidw-philips/cgraph) (this skill bundle)
+- Upstream project: [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph)
+- Upstream documentation: [colbymchenry.github.io/codegraph](https://colbymchenry.github.io/codegraph/)
 
 ## License
 
-cgraph wraps [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph), which is published under its own license. This skill packaging is public domain.
-
-## See Also
-
-- [INSTALL.md](./INSTALL.md) — Agent-specific setup instructions
-- [SKILL.md](./SKILL.md) — Provider integration details
-- [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph) — Original project
+This skill packaging is MIT. CodeGraph itself is published under its own license — see [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph) for terms.

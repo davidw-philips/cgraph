@@ -1,6 +1,10 @@
 #!/bin/bash
 # cgraph Node.js Runtime Checker (Bash/Shell)
-# Checks if Node.js is installed and compatible with cgraph (v18+)
+#
+# NOTE: The codegraph CLI/MCP server (the standalone installer) bundles its own
+# runtime and needs NO Node.js at all. This script is only relevant if you plan
+# to install via `npm i -g @colbymchenry/codegraph` (needs Node) or embed
+# CodeGraph's library API in your own app (needs Node 22.5+ for node:sqlite).
 
 MIN_NODE_VERSION="18.0.0"
 TARGET_NODE_VERSION="22.5.0"
@@ -76,7 +80,7 @@ if node_version=$(get_node_info); then
     if compare_versions "$node_version" "$MIN_NODE_VERSION"; then
         write_status "Version v$node_version is compatible (requires v$MIN_NODE_VERSION+)" "OK"
         echo ""
-        write_status "Node.js runtime is ready for cgraph" "OK"
+        write_status "Node.js runtime is ready for npm install / library embedding" "OK"
         exit 0
     else
         write_status "Version v$node_version is TOO OLD (requires v$MIN_NODE_VERSION+)" "WARN"
