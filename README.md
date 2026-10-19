@@ -63,6 +63,7 @@ codegraph callees <symbol>        # Find what a function/method calls
 codegraph impact <symbol>         # Analyze what code is affected by changing a symbol
 codegraph affected [files...]     # Find test files affected by changed source files
 codegraph daemon                  # Manage background daemons — pick one to stop
+codegraph unlock [path]           # Clear stale locks and orphan daemon artifacts
 codegraph upgrade [version]       # Update to the latest release (--check, --force)
 codegraph help [command]          # Show help, optionally for one command
 ```
@@ -111,6 +112,13 @@ See the [upstream Configuration docs](https://github.com/colbymchenry/codegraph#
 .codegraph/
 └── codegraph.db        # Local SQLite graph (symbols, edges, files, FTS5 full-text search)
 ```
+
+## Daemons & Git Worktrees
+
+- **Starting Up**: Agents start MCP automatically (`codegraph serve --mcp`), which launches or connects to a shared background daemon and file watcher.
+- **Stopping Daemons**: Run `codegraph daemon` to interactively select and stop daemons, or terminate the PID in `.codegraph/daemon.pid`.
+- **Git Branches**: The background watcher auto-syncs branch switches (~2s debounce). Run `codegraph sync` for manual catch-up, or `codegraph index --force` after large rebases.
+- **Git Worktrees**: Always run `codegraph init` (or `codegraph init -i`) inside each worktree. Otherwise, CodeGraph walks up and borrows the main checkout's index, returning stale symbols from the main branch. CodeGraph detects this and warns about worktree index mismatches.
 
 ## Agent Skills
 

@@ -39,4 +39,12 @@ Both install NVM, then Node.js v22.5.0.
 
 > In Claude Code, reference these scripts as `${CLAUDE_SKILL_DIR}/scripts/check-node.sh` (etc.) in bash injection commands so the path resolves correctly regardless of the current working directory.
 
+## Environment Lifecycle & Worktrees
+
+- **Starting Up**: Agents launch MCP automatically (`codegraph serve --mcp`), which spawns or attaches to the background daemon and file watcher. Check health with `codegraph status`.
+- **Stopping Daemons**: Run `codegraph daemon` to select and stop daemons interactively, or terminate the PID in `.codegraph/daemon.pid`.
+- **Recovering from Crashes**: Run `codegraph unlock` to remove stale locks and orphan daemon entries.
+- **Git Branches**: The watcher automatically syncs branch switches. Run `codegraph sync` for manual catch-up.
+- **Git Worktrees**: **Always run `codegraph init` inside each worktree directory**. If a worktree does not have its own `.codegraph/`, CodeGraph walks up and borrows the main checkout's index, returning symbols from the wrong branch. CodeGraph detects this and emits a worktree index mismatch warning.
+
 See the full [INSTALL.md](https://github.com/davidw-philips/cgraph/blob/main/INSTALL.md) in the `cgraph` skill bundle repo for the complete guide, troubleshooting, and configuration reference.

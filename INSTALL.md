@@ -155,6 +155,56 @@ codegraph explore "how does X work"
 
 ---
 
+## Managing Daemons & Environment
+
+### How CodeGraph Starts Up
+You do **not** need to manually launch a daemon or service before working:
+- **Automatic MCP Launch**: When you start an agent session (VS Code Copilot, Claude Code, Cursor, Codex), the AI host automatically launches the MCP server (`codegraph serve --mcp`).
+- **Shared Daemon Mode**: The MCP server connects to or spawns a background daemon on demand. The daemon maintains a single shared SQLite handle, cache, and OS filesystem watcher across all client sessions.
+- **Verification**: Run `codegraph status` anytime to view active index metrics, SQLite journal mode, and any pending sync files.
+
+### Stopping & Managing Daemons
+- **Interactive Daemon Manager**:
+  ```bash
+  codegraph daemon
+  ```
+  Presents a list of active daemons (the current project's daemon floats to the top) and lets you stop a specific daemon or all daemons.
+- **Scripted / Non-Interactive Stop**: Daemons write their PID to `.codegraph/daemon.pid`. Terminate that PID directly (e.g. `Stop-Process -Id <pid>` on Windows or `kill <pid>` on Linux/macOS). Global registrations live in `~/.codegraph/daemons/`.
+- **Clearing Stale Locks**: If an indexing process or daemon terminates unexpectedly and leaves behind locks, run:
+  ```bash
+  codegraph unlock
+  ```
+  This clears stale `codegraph.lock` and orphan daemon metadata.
+
+### Disabling Daemon or Watcher Mode
+- **Direct Mode (No Shared Daemon)**: Set `CODEGRAPH_NO_DAEMON=1` in your environment. Each CLI and MCP command runs in direct mode as an independent process.
+- **Disable Live Watcher**: Set `CODEGRAPH_NO_WATCH=1` (or pass `--no-watch`). Ideal for slow virtual filesystems (like WSL2 `/mnt/` drives or network shares) or to minimize background resource usage.
+
+---
+
+## Working with Git Branches & Worktrees
+
+### Git Branch Switching (Single Working Tree)
+- **Automatic Filesystem Sync**: CodeGraph tracks file paths and hashes, not Git references. When you run `git switch <branch>` or `git checkout <branch>`, changed files on disk are detected by the background watcher and synced incrementally to SQLite within ~2 seconds.
+- **Manual Catch-Up Sync**: If files were modified or checked out while the watcher/daemon was offline, run:
+  ```bash
+  codegraph sync
+  ```
+- **Clean Re-index**: After significant rebases or merges with large structural changes, force a complete clean re-index:
+  ```bash
+  codegraph index --force
+  ```
+- **Git Sync Hooks (When Watcher is Disabled)**: When `CODEGRAPH_NO_WATCH=1` is used, CodeGraph can install `post-commit`, `post-merge`, and `post-checkout` hooks that run background `codegraph sync` automatically on Git operations.
+
+### Git Worktrees & The "Borrowed Index" Hazard
+- **How CodeGraph Finds Indexes**: CodeGraph locates `.codegraph/` by walking up directory trees from `cwd`.
+- **The Borrowed Index Hazard**: If you create a Git worktree (e.g. `git worktree add ../feature-worktree feature`) and the worktree does not contain its own `.codegraph/` folder, CodeGraph may walk up and bind to the main repository's `.codegraph/` index. Queries in the worktree will then return symbols and source code from the **main checkout's branch**, missing all worktree-specific changes!
+- **Mismatch Detection**: CodeGraph includes built-in detection (`detectWorktreeIndexMismatch`) that checks `git rev-parse --show-toplevel` against `indexRoot` via `git rev-parse --git-common-dir`. When a worktree inadvertently borrows the main index, CodeGraph issues warnings in `codegraph status` and MCP query tools.
+- **The Golden Rule for Worktrees**: **Always run `codegraph init` (or `codegraph init -i`) inside each worktree directory**. Each worktree must maintain its own dedicated `.codegraph/` directory and SQLite database to index its branch independently.
+- **Custom Directory Isolation**: Set `CODEGRAPH_DIR` (e.g. `export CODEGRAPH_DIR=.codegraph-worktree`) if you need custom index directory naming or isolation (e.g. between Windows and WSL2).
+
+---
+
 ## Updating
 
 ```bash
@@ -197,6 +247,12 @@ codegraph uninit
 
 **Missing symbols after an edit** — The watcher auto-syncs on save (wait a couple of seconds). Run `codegraph sync` manually if needed. Confirm the file's language is supported and isn't inside a `.gitignore`'d or default-excluded directory.
 
+**Git worktree returns symbols from main branch** — A worktree without its own `.codegraph/` directory borrows the main checkout's index. Run `codegraph init` (or `codegraph init -i`) inside the worktree directory to build a worktree-local index.
+
+**Stale lock or orphan daemon (`codegraph.lock`)** — If indexing or a daemon crashed abruptly, run `codegraph unlock` to clear stale locks and orphan PID records.
+
+**Terminating background daemons** — Run `codegraph daemon` to interactively select and stop running daemons, or terminate the PID listed in `.codegraph/daemon.pid`.
+
 **Sharing one checkout between Windows and WSL** — Don't point both at the same `.codegraph/`. Set `CODEGRAPH_DIR=.codegraph-wsl` on the WSL side and run `codegraph init` there so each OS keeps its own index.
 
 **Windows: `codegraph` command not found after install** — Open a **new PowerShell window**; the installer does not reload your current shell's PATH.
@@ -235,6 +291,7 @@ CODEGRAPH_TELEMETRY=0        # Disable anonymous usage telemetry (or: codegraph 
 CODEGRAPH_MCP_TOOLS=explore,node,search,callers   # Re-enable hidden MCP tools beyond codegraph_explore
 CODEGRAPH_DIR=.codegraph-wsl # Use a different index directory name (e.g. to separate Windows/WSL indexes)
 CODEGRAPH_NO_DAEMON=1        # Skip the shared background daemon; each MCP session runs in its own process
+CODEGRAPH_NO_WATCH=1         # Disable live filesystem watcher (useful on slow virtual filesystems or WSL2 /mnt)
 ```
 
 ---
