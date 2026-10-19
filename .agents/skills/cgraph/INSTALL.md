@@ -21,30 +21,22 @@ npm i -g @colbymchenry/codegraph
 
 The CLI/MCP server above needs **no Node.js at all** — skip this section unless you chose the npm install, or you're embedding CodeGraph's library API (`import CodeGraph from '@colbymchenry/codegraph'`, which requires **Node 22.5+** for its built-in `node:sqlite`).
 
-Check your current runtime:
+This skill bundles its own copies of the Node.js checker/installer scripts in `scripts/` (no network fetch required beyond downloading Node itself):
 
-```powershell
-# Windows
-irm https://raw.githubusercontent.com/davidw-philips/cgraph/main/installers/check-node.ps1 | iex
+```bash
+# Check your current runtime
+scripts/check-node.sh          # macOS / Linux
+scripts/check-node.ps1         # Windows (PowerShell)
 ```
 
 ```bash
-# macOS / Linux
-curl -fsSL https://raw.githubusercontent.com/davidw-philips/cgraph/main/installers/check-node.sh | bash
-```
-
-Install/upgrade Node.js via NVM if the check reports it's missing or too old:
-
-```powershell
-# Windows (run as Administrator)
-irm https://raw.githubusercontent.com/davidw-philips/cgraph/main/installers/install-nvm.ps1 | iex
-```
-
-```bash
-# macOS / Linux
-curl -fsSL https://raw.githubusercontent.com/davidw-philips/cgraph/main/installers/install-nvm.sh | bash
+# Install/upgrade Node.js via NVM if the check reports it's missing or too old
+scripts/install-nvm.sh         # macOS / Linux
+scripts/install-nvm.ps1        # Windows (PowerShell, run as Administrator)
 ```
 
 Both install NVM, then Node.js v22.5.0.
+
+> In Claude Code, reference these scripts as `${CLAUDE_SKILL_DIR}/scripts/check-node.sh` (etc.) in bash injection commands so the path resolves correctly regardless of the current working directory.
 
 See the full [INSTALL.md](https://github.com/davidw-philips/cgraph/blob/main/INSTALL.md) in the `cgraph` skill bundle repo for the complete guide, troubleshooting, and configuration reference.

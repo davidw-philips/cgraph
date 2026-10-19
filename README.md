@@ -114,12 +114,16 @@ See the [upstream Configuration docs](https://github.com/colbymchenry/codegraph#
 
 ## Agent Skills
 
-This repository includes portable skill bundles that document the pre-flight check, install path, and query workflow for each agent surface:
+This repository includes portable skill bundles — each fully self-contained with its own `SKILL.md`, `INSTALL.md`, and a `scripts/` folder (the Node.js checker/installer scripts, per the [Agent Skills open standard](https://agentskills.io/specification)) — so each one works even when copied or installed independently of this repo (e.g. via `gh skill install`, or a personal `~/.claude/skills/` copy):
 
 - GitHub Copilot: [.github/skills/cgraph/](.github/skills/cgraph)
 - Claude Code: [.claude/skills/cgraph/](.claude/skills/cgraph)
-- OpenAI Codex: [.codex/skills/cgraph/](.codex/skills/cgraph)
+- OpenAI Codex: [.codex/skills/cgraph/](.codex/skills/cgraph) — see note below
 - Generic agents: [.agents/skills/cgraph/](.agents/skills/cgraph)
+
+> **Note on Codex:** the Codex CLI currently only scans `.agents/skills` (repo, user, and admin scopes) for local skills — it does **not** read `.codex/skills`. The `.codex/skills/cgraph/` folder above is kept for parity with the other agent folders and for any tooling that does read it, but `.agents/skills/cgraph/` is the one Codex actually loads. See [OpenAI's skills docs](https://developers.openai.com/codex/skills/).
+
+The top-level [`installers/`](./installers) folder serves the same scripts to anyone who clones this whole repo and follows the root [INSTALL.md](./INSTALL.md) directly.
 
 ## Troubleshooting
 

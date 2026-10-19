@@ -1,6 +1,7 @@
 ---
 name: cgraph
 description: Pre-indexed local code knowledge graph for navigating and understanding a codebase's structure (symbols, call paths, dependencies, blast radius) without a grep/read loop. Use when answering "how does X work", "what calls Y", or surveying an unfamiliar part of the active repository. Do not use for external/public repositories not yet indexed locally, or a repository with no `.codegraph/` index — run `codegraph init` there first, or use the deepwiki skill for public repos instead.
+compatibility: Standard CLI/MCP install needs no runtime (bundled Node). Node.js 18+ (22.5+ for library embedding) only if installing via npm instead.
 ---
 
 # CodeGraph (`codegraph`)
@@ -21,7 +22,7 @@ Do NOT use it for a repository with no `.codegraph/` index yet (run `codegraph i
 command -v codegraph || Get-Command codegraph
 ```
 
-If missing, see [INSTALL.md](INSTALL.md), or install with:
+If missing, see [INSTALL.md](INSTALL.md), or install directly with:
 
 ```bash
 # macOS / Linux — no Node.js required, bundles its own runtime
@@ -30,6 +31,8 @@ curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install
 # Windows (PowerShell) — no Node.js required
 irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
 ```
+
+This is all most environments need — skip straight to **Workflow** below. Only use the bundled `scripts/` (see [INSTALL.md](INSTALL.md)) if you specifically need the npm install path or CodeGraph's Node library API.
 
 ## Workflow
 
@@ -61,4 +64,4 @@ codegraph impact someSymbol
 - Only query a project that has a `.codegraph/` index. A path with none returns clean guidance to use built-in tools instead — indexing stays a deliberate decision, not automatic.
 - Prefer `codegraph_explore` (or `codegraph explore` from the CLI) over the narrower hidden tools (`codegraph_node`, `codegraph_search`, `codegraph_callers`, `codegraph_callees`, `codegraph_impact`, `codegraph_files`, `codegraph_status`) — everything they return already arrives inline on `codegraph_explore`.
 
-See [INSTALL.md](INSTALL.md) for installation options, including the Node.js checker needed only for the npm install path or library embedding.
+See [INSTALL.md](INSTALL.md) for installation options, including the bundled Node.js checker/installer scripts in `scripts/`, needed only for the npm install path or library embedding.

@@ -262,12 +262,14 @@ When an agent is told to use the `cgraph` skill and `codegraph` isn't yet on PAT
 3. Run `codegraph install` (Step 2), then `codegraph init` (Step 3) in the active project.
 4. Start answering structural questions — the agent calls `codegraph_explore` itself.
 
-Only fall back to the Node.js check/install scripts in `installers/` if the agent specifically needs the npm path or library embedding (Option B).
+Only fall back to the Node.js check/install scripts in `installers/` if the agent specifically needs the npm path or library embedding (Option B). Each skill folder also bundles its own copy of these scripts under `scripts/`, so a skill installed independently of this repo (e.g. via `gh skill install` or a personal `~/.claude/skills/` copy) stays self-contained.
+
+**Codex note:** the Codex CLI only scans `.agents/skills` for local skills (repo/user/admin scopes) — it does not read `.codex/skills`. If you're bootstrapping specifically for Codex, use [.agents/skills/cgraph/](.agents/skills/cgraph), not `.codex/skills/cgraph/`.
 
 ---
 
 ## What's Next?
 
-- See the skill bundles in [.agents/skills/cgraph/](.agents/skills/cgraph), [.claude/skills/cgraph/](.claude/skills/cgraph), [.codex/skills/cgraph/](.codex/skills/cgraph), and [.github/skills/cgraph/](.github/skills/cgraph) for the condensed, agent-facing workflow.
+- See the skill bundles in [.agents/skills/cgraph/](.agents/skills/cgraph), [.claude/skills/cgraph/](.claude/skills/cgraph), [.codex/skills/cgraph/](.codex/skills/cgraph) (kept for parity; Codex itself reads `.agents/skills`), and [.github/skills/cgraph/](.github/skills/cgraph) for the condensed, agent-facing workflow.
 - Check [README.md](./README.md) for the CLI/MCP reference and configuration summary.
 - Review [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph) — the upstream project and single source of truth for all commands and tools.
